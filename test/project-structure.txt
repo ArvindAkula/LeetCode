@@ -1,0 +1,44 @@
+referral-system/
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── example/
+│   │   │           └── referral/
+│   │   │               ├── ReferralApplication.java
+│   │   │               ├── config/
+│   │   │               │   └── DynamoDBConfig.java
+│   │   │               ├── model/
+│   │   │               │   ├── Agent.java
+│   │   │               │   ├── User.java
+│   │   │               │   └── AgentReferral.java
+│   │   │               ├── repository/
+│   │   │               │   ├── AgentRepository.java
+│   │   │               │   ├── UserRepository.java
+│   │   │               │   └── AgentReferralRepository.java
+│   │   │               ├── service/
+│   │   │               │   ├── AgentService.java
+│   │   │               │   ├── UserService.java
+│   │   │               │   └── ReferralService.java
+│   │   │               └── resolver/
+│   │   │                   ├── Query.java
+│   │   │                   ├── Mutation.java
+│   │   │                   ├── UserResolver.java
+│   │   │                   ├── AgentResolver.java
+│   │   │                   └── AgentReferralResolver.java
+│   │   │
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── graphql/
+│   │           └── schema.graphqls
+│   │
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── example/
+│                   └── referral/
+│                       └── ReferralIntegrationTest.java
+│
+├── build.gradle
+└── README.md
