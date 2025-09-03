@@ -1,0 +1,84 @@
+@startuml
+title SAML vs OIDC — Side-by-Side Essentials for Freshers
+
+skinparam sequence {
+  ArrowColor #333
+  ActorBorderColor #333
+  ParticipantBorderColor #333
+  LifeLineBorderColor #888
+  LifeLineBackgroundColor #f7f7f7
+  ParticipantBackgroundColor #ffffff
+  BoxBorderColor #888
+  BoxBackgroundColor #f9f9ff
+  NoteBackgroundColor #ffffe0
+  NoteFontColor #333
+}
+
+actor User
+
+box "SAML (IdP-Initiated SSO)\n• XML Assertions\n• Web SSO (Enterprise)" #eef7ff
+  participant "User’s Browser" as B
+  participant "Identity Provider (IdP)\n(Okta/Azure/Ping)" as IdP
+  participant "Service Provider (SP)\n(App like ToGA Hub)" as SP
+
+  == Launch from IdP ==
+  User -> IdP : 1) Login to IdP portal (password/MFA)
+  IdP -> IdP : 2) Create SAML Assertion (XML,\nsigned, NameID + attributes)
+  IdP -> B : 3) Auto-post SAMLResponse to SP ACS URL
+  B -> SP : 4) POST SAMLResponse (HTTP-POST)
+  SP -> SP : 5) Validate signature, audience,\nconditions, clock skew
+  SP -> B : 6) Set session cookies, redirect to app
+  B -> User : 7) User is in the SP (no re-login)
+
+  note over IdP,SP
+  Key objects:
+  • SAML Assertion (XML)
+  • NameID + Attributes
+  • IdP/ SP Metadata (certs, endpoints)
+  end note
+end box
+
+box "OIDC (Auth Code + PKCE)\n• JSON (JWT)\n• Web + Mobile + APIs" #eefcf0
+  participant "Mobile/Web App" as App
+  participant "Authorization Server (IdP)\n(OIDC Provider)" as OP
+  participant "Resource/API Server\n(Protected APIs)" as API
+
+  == Start at the App ==
+  User -> App : 1) Tap “Sign in”
+  App -> OP : 2) Authorization Request\n(code + PKCE challenge)
+  alt Not logged in
+    OP -> User : 3) Prompt login + consent
+    User -> OP : 4) Approve
+  else Already logged in
+    OP -> OP : 3') Reuse session
+  end
+
+  OP -> App : 5) Redirect with Authorization Code
+  App -> OP : 6) Token Request\n(code + PKCE verifier)
+  OP -> App : 7) Tokens (ID Token - JWT,\nAccess Token, optional Refresh)
+
+  App -> API : 8) Call APIs with Access Token (Bearer)
+  API -> App : 9) Data response
+  App -> User : 10) User signed in (app session)
+
+  note over App,OP
+  Key objects:
+  • ID Token (JWT) = who you are
+  • Access Token = what you can access
+  • PKCE = mobile-safe code flow
+  end note
+end box
+
+== Quick Differences ==
+note over B,API
+SAML:
+• XML, browser POST/redirects
+• Great for enterprise web SSO
+• Centered on assertions & cookies
+
+OIDC:
+• JSON/JWT, REST/HTTPS
+• Great for web + mobile + APIs
+• Centered on tokens (ID/Access)
+end note
+@enduml

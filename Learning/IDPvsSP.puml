@@ -1,0 +1,93 @@
+@startuml
+title SAML SSO — SP-Initiated vs IdP-Initiated (Side by Side)
+
+skinparam sequence {
+  ArrowColor #333
+  ActorBorderColor #333
+  ParticipantBorderColor #333
+  LifeLineBorderColor #888
+  LifeLineBackgroundColor #f7f7f7
+  ParticipantBackgroundColor #ffffff
+  BoxBorderColor #888
+  BoxBackgroundColor #f9f9ff
+  NoteBackgroundColor #ffffe0
+  NoteFontColor #333
+}
+
+actor User
+
+' ===================== SP-Initiated =====================
+box "SP-Initiated SSO (User starts at SP)" #eef7ff
+  participant "User Browser" as B1
+  participant "Service Provider (SP)\n" as SP
+  participant "Identity Provider (IdP)\n(Okta/Azure/Ping)" as IdP
+
+  User -> B1 : 1) Open SP URL (deep link / bookmark)
+  B1 -> SP : 2) Request protected resource
+  SP -> B1 : 3) Redirect to IdP with AuthnRequest (+ RelayState)
+  B1 -> IdP : 4) Follow redirect (AuthnRequest)
+
+  alt User not logged in
+    IdP -> User : 5) Prompt login + MFA
+    User -> IdP : 6) Authenticate
+  else Already logged in
+    IdP -> IdP : 5') Reuse IdP session
+  end
+
+  IdP -> B1 : 7) POST SAMLResponse (signed assertion)
+  B1 -> SP : 8) POST to SP ACS URL (SAMLResponse, RelayState)
+  SP -> SP : 9) Validate signature, audience, conditions
+  SP -> B1 : 10) Set session cookies + redirect to resource
+  B1 -> User : 11) User is in SP (target page)
+end box
+
+' ===================== IdP-Initiated =====================
+box "IdP-Initiated SSO (User starts at IdP)" #eefcf0
+  participant "User Browser" as B2
+  participant "Identity Provider (IdP)\n(Okta/Azure/Ping)" as IdP2
+  participant "Service Provider (SP)\n" as SP2
+
+  User -> IdP2 : 1) Login to IdP portal (dashboard)
+  IdP2 -> User : 2) Show app tiles (SPs)
+  User -> IdP2 : 3) Click SP tile (launch app)
+
+  IdP2 -> IdP2 : 4) Create SAML Assertion (signed XML)
+  IdP2 -> B2 : 5) POST SAMLResponse to SP ACS URL
+  B2 -> SP2 : 6) Deliver SAMLResponse (HTTP-POST)
+  SP2 -> SP2 : 7) Validate signature, audience, conditions
+  SP2 -> B2 : 8) Set session cookies + redirect to app home
+  B2 -> User : 9) User is in SP (home/dashboard)
+end box
+
+' ===================== Notes & Differences =====================
+== Key Differences ==
+note over SP,SP2
+SP-Initiated:
+• Natural for bookmarks/deep links
+• Needs AuthnRequest from SP → IdP
+• Good when users start at the app URL
+
+IdP-Initiated:
+• Natural for enterprise portals
+• No AuthnRequest from SP
+• Good when users start at IdP dashboard
+end note
+
+== Common SAML Fundamentals ==
+note over IdP,IdP2
+Both flows rely on:
+• Trust via exchanged metadata (EntityID, ACS URL, certs)
+• Signed SAML Assertions (NameID + attributes)
+• Time/audience/recipient validation at SP
+end note
+
+== Troubleshooting Tips ==
+note over B1,B2
+If errors:
+• Check audience/ACS mismatch
+• Verify IdP certificate & signing
+• Confirm NameID format/required attributes
+• Look for clock skew issues
+Use SAML-tracing browser plugins to inspect messages.
+end note
+@enduml
